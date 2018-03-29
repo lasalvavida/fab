@@ -1,0 +1,13 @@
+{
+	"bin": [{
+		"name": "fab",
+		"sources": [{
+			"dir": "src",
+			"recursive": true
+		}],
+		"include": [
+			"include",
+			"dependencies/json/single_include"
+		]
+	}]
+}
