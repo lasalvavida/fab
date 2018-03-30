@@ -6,8 +6,20 @@
 			"recursive": true
 		}],
 		"include": [
-			"include",
-			"dependencies/json/single_include"
+			"include"
+		],
+		"depends": [
+			"json"
 		]
+	}],
+	"lib": [{
+		"name": "json",
+		"git": "https://github.com/nlohmann/json.git",
+		"ref": "v3.1.2",
+		"export": {
+			"include": [
+				"single_include"
+			]
+		}
 	}]
 }

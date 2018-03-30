@@ -24,6 +24,55 @@ int main() {
 	configFileStream >> configJson;
 
 	vector<Configuration*> builds;
+	map<string, Configuration*> libs;
+
+	GccCompiler* compiler = new GccCompiler("g++");
+
+	json::iterator findLib = configJson.find("lib");
+	if (findLib != configJson.end()) {
+		for (json lib : *findLib) {
+			Configuration* config = new Configuration();
+			string name = lib["name"];
+
+			json::iterator findGit = lib.find("git");
+			if (findGit != lib.end()) {
+				string gitUrl = (*findGit).get<string>();
+
+				path gitUrlPath = path(gitUrl);
+				string repo = gitUrlPath.stem();
+				string user = gitUrlPath.parent_path().filename();
+
+				json::iterator findRef = lib.find("ref");
+				string ref = "master";
+				if (findRef != lib.end()) {
+					ref = (*findRef).get<string>();
+				}
+
+				path outputDir = path(config->buildDirectory) /
+					user / repo / ref;
+
+				create_directories(outputDir);
+				compiler->runProcess("git clone " + gitUrl + " " +
+					outputDir.string() + "\n");
+
+				config->sourceDirectory = outputDir.string();
+			}
+
+			json::iterator findExport = lib.find("export");
+			if (findExport != lib.end()) {
+				json exports = *findExport;
+				json::iterator findInclude = exports.find("include");
+				if (findInclude != exports.end()) {
+					for (json include : *findInclude) {
+						config->exportIncludeDirectories.insert(
+							include.get<string>());
+					}
+				}
+			}
+
+			libs[name] = config;
+		}
+	}
 
 	json::iterator findBin = configJson.find("bin");
 	if (findBin != configJson.end()) {
@@ -65,11 +114,29 @@ int main() {
 					}
 				}
 			}
+
+			json::iterator findDepends = bin.find("depends");
+			if (findDepends != bin.end()) {
+				for (json depends : *findDepends) {
+					string dependency = depends.get<string>();
+					auto findLib = libs.find(dependency);
+					if (findLib != libs.end()) {
+						Configuration* dependencyConfig = findLib->second;
+						for (string includeDirectory : dependencyConfig->exportIncludeDirectories) {
+							path resolveInclude = path(dependencyConfig->sourceDirectory) /
+								includeDirectory;
+							config->includeDirectories.insert(resolveInclude.string());
+						}
+					} else {
+						cout << "Dependency " << dependency << " not found." << endl;
+					}
+				}
+			}
+
 			builds.push_back(config);
 		}
 	}
 
-	GccCompiler* compiler = new GccCompiler("g++");
 	for (Configuration* build : builds) {
 		compiler->compile(build);
 	}
