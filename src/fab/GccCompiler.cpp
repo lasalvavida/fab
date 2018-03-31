@@ -81,8 +81,10 @@ string GccCompiler::linkObjects(set<Object*> objects,
 		}
 
 		for (Configuration* dependency : config->dependencies) {
-			cmd += " " + (path(config->buildDirectory) / 
-				dependency->outputFile).string();
+			if (dependency->outputFile.size() > 0) {
+				cmd += " " + (path(config->buildDirectory) / 
+					dependency->outputFile).string();
+			}
 		}
 
 		for (string linkLibrary : getLinkLibraries(objects)) {
