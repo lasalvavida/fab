@@ -59,8 +59,10 @@ Object* createObject(string sourceFile,
 		if (line.substr(0, includeMacro.size()) == includeMacro) {
 			size_t openCarat = line.find("<");
 			size_t closeCarat = line.find(">");
-			string include = line.substr(openCarat, closeCarat);
-			object->includes.push_back(include);
+			if (openCarat < line.size() && closeCarat < line.size()) {
+				string include = line.substr(openCarat, closeCarat);
+				object->includes.push_back(include);
+			}
 		}
 	}
 
