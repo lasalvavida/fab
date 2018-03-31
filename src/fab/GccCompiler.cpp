@@ -11,7 +11,9 @@ string GccCompiler::baseCommand(Configuration* config) {
 	string cmd = _gccPath + " -c";
 
 	for (string includeDirectory : config->includeDirectories) {
-		cmd += " -I" + includeDirectory;
+		path sourceInclude = path(config->sourceDirectory) /
+			includeDirectory;
+		cmd += " -I" + sourceInclude.string();
 	}
 
 	for (Configuration* dependency : config->dependencies) {

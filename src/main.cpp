@@ -73,9 +73,11 @@ Configuration* createConfig(Compiler* compiler, json target,
 				}
 
 				if (recursive) {
+					path dirPath = path(config->sourceDirectory) /
+						dir.get<string>();
 					for (const directory_entry entry :
 							recursive_directory_iterator(
-								dir.get<string>())) {
+								dirPath)) {
 						path p = entry.path();
 						if (!is_directory(p) &&
 								p.extension() == ".cpp") {
