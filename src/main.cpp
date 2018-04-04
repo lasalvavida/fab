@@ -25,7 +25,7 @@ string gitClone(Compiler* compiler, string dir, string url,
 }
 
 Configuration* createConfig(Compiler* compiler, json target,
-		string sourceDirectory) {
+		string sourceDirectory, map<string, Configuration*>* libs) {
 	Configuration* config = new Configuration();
 	config->sourceDirectory = sourceDirectory;
 
@@ -88,6 +88,19 @@ Configuration* createConfig(Compiler* compiler, json target,
 			}
 		}
 	}
+
+	json::iterator findDepends = target.find("depends");
+	if (findDepends != target.end()) {
+		for (json depends : *findDepends) {
+			string dependency = depends.get<string>();
+			auto findLib = libs->find(dependency);
+			if (findLib != libs->end()) {
+				config->dependencies.insert(findLib->second);
+			} else {
+				cout << "Dependency " << dependency << " not found." << endl;
+			}
+		}
+	}
 	return config;
 }
 
@@ -131,7 +144,7 @@ void createBuild(Compiler* compiler, json configJson,
 	if (findLib != configJson.end()) {
 		for (json lib : *findLib) {
 			Configuration* config = createConfig(compiler, lib,
-				sourceDirectory);
+				sourceDirectory, libs);
 			config->type = Configuration::Type::STATIC_LIBRARY;
 			string name = lib["name"];
 			if (config->sourceFiles.size() > 0) {
@@ -147,22 +160,10 @@ void createBuild(Compiler* compiler, json configJson,
 		if (findBin != configJson.end()) {
 			for (json bin : *findBin) {
 				Configuration* config = createConfig(compiler, bin,
-					sourceDirectory);
+					sourceDirectory, libs);
 				config->type = Configuration::Type::EXECUTABLE;
 				config->outputFile = bin["name"];
 
-				json::iterator findDepends = bin.find("depends");
-				if (findDepends != bin.end()) {
-					for (json depends : *findDepends) {
-						string dependency = depends.get<string>();
-						auto findLib = libs->find(dependency);
-						if (findLib != libs->end()) {
-							config->dependencies.insert(findLib->second);
-						} else {
-							cout << "Dependency " << dependency << " not found." << endl;
-						}
-					}
-				}
 				builds->push_back(config);
 			}
 		}
