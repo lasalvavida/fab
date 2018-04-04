@@ -58,6 +58,18 @@ set<string> getLinkLibraries(set<Object*> objects) {
 	return linkLibraries;
 }
 
+string addDependencies(Configuration* config) {
+	string cmd = "";
+	for (Configuration* dependency : config->dependencies) {
+		if (dependency->outputFile.size() > 0) {
+			cmd += addDependencies(dependency);
+			cmd += " " + (path(config->buildDirectory) / 
+				dependency->outputFile).string();
+		}
+	}
+	return cmd;
+}
+
 string GccCompiler::linkObjects(set<Object*> objects,
 								Configuration* config) {
 	if (config->type == Configuration::Type::STATIC_LIBRARY) {
@@ -82,12 +94,7 @@ string GccCompiler::linkObjects(set<Object*> objects,
 			cmd += " " + object->objectFile;
 		}
 
-		for (Configuration* dependency : config->dependencies) {
-			if (dependency->outputFile.size() > 0) {
-				cmd += " " + (path(config->buildDirectory) / 
-					dependency->outputFile).string();
-			}
-		}
+		cmd += addDependencies(config);
 
 		for (string linkLibrary : getLinkLibraries(objects)) {
 			cmd += " " + linkLibrary;
