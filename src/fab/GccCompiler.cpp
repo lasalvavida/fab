@@ -50,7 +50,7 @@ set<string> getLinkLibraries(set<Object*> objects) {
 	set<string> linkLibraries;
 	for (Object* object : objects) {
 		for (string include : object->includes) {
-			if (include == "<experimental/filesystem>") {
+			if (include == "experimental/filesystem") {
 				linkLibraries.insert("-lstdc++fs");
 			}
 		}

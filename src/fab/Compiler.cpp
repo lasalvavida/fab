@@ -6,23 +6,12 @@
 #include <memory>
 #include <experimental/filesystem>
 
+#include <sugar/Parser.h>
+
 using namespace std;
 using namespace std::experimental::filesystem;
 using namespace fab;
-
-const string includeMacro = "#include";
-
-inline string trim(string& str) {
-	size_t lastLength = 0;
-	while (str.length() != lastLength) {
-		lastLength = str.size();
-		str.erase(0, str.find_first_not_of(' '));
-		str.erase(0, str.find_first_not_of('\t'));
-		str.erase(str.find_last_not_of(' ') + 1);
-		str.erase(str.find_last_not_of('\t') + 1);
-	}
-	return str;
-}
+using namespace sugar;
 
 string Compiler::runProcess(string command) {
 	string output;
@@ -53,18 +42,12 @@ Object* createObject(string sourceFile,
 	object->objectFile = outputFilePath.string();
 
 	ifstream sourceStream(sourceFile);
-	for (string line; getline(sourceStream, line); ) {
-		line = trim(line);
-		// This isn't very smart, but good enough for now
-		if (line.substr(0, includeMacro.size()) == includeMacro) {
-			size_t openCarat = line.find("<");
-			size_t closeCarat = line.find(">");
-			if (openCarat < line.size() && closeCarat < line.size()) {
-				string include = line.substr(openCarat, closeCarat);
-				object->includes.push_back(include);
-			}
-		}
-	}
+	string sourceContent((istreambuf_iterator<char>(sourceStream)),
+		(istreambuf_iterator<char>()));
+
+	Parser* parser = new Parser();
+	Block* block = parser->parse(sourceContent);
+	object->includes = block->getIncludes();
 
 	return object;
 }
